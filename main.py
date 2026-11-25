@@ -38,13 +38,16 @@ def validate_entry(word: str) -> None:
 
 def destination() -> Path:
     """The OUTPUT_PATH override, or the harness default entry.txt."""
-    return Path(os.environ.get("OUTPUT_PATH", "/output/entry.txt"))
+    raw = os.environ.get("OUTPUT_PATH") or "/output/entry.txt"
+    return Path(raw)
 
 
 def emit(word: str, path: Path) -> None:
     """Write the word with no trailing newline, then read it back."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(word, encoding="utf-8")
+    tmp_path = path.with_suffix(".tmp")
+    tmp_path.write_text(word, encoding="utf-8")
+    os.replace(tmp_path, path)
     _gate(
         path.read_text(encoding="utf-8") == word,
         "written entry does not match WORD",
